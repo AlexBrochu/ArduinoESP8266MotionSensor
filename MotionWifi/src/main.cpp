@@ -1,63 +1,114 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <WiFiClientSecure.h>
+#include <ESP8266WebServer.h>
 #include <WiFiUdp.h>
-#include <ArduinoOTA.h>
+#include "twilio.hpp"
 #include "arduino_secrets.h"
+
+// Use software serial for debugging?
+#define USE_SOFTWARE_SERIAL 0
+
+// Print debug messages over serial?
+#define USE_SERIAL 1
+
+// USE TEST config?
+#define USE_TEST_CONFIG 1
+
+// Find the api.twilio.com SHA1 fingerprint, this one was valid as 
+// of August 2019.
+const char fingerprint[] = "06 86 86 C0 A0 ED 02 20 7A 55 CC F0 75 BB CF 24 B1 D9 C0 49";
+
+#if USE_TEST_CONFIG == 1
+const char* account_sid = TEST_ACCOUNT_ID;
+const char* auth_token = TEST_AUTHTOKEN;
+String from_number = MAGIC_PHONE_FROM;
+#else
+const char* account_sid = LIVE_ACCOUNT_ID;
+const char* auth_token = LIVE_AUTHTOKEN;
+String from_number = PHONE_FROM;
+#endif
 
 const char* ssid = SECRET_SSID;
 const char* password = SECRET_PASS;
-const String headerCommand = "C-";
-void sendData(String msg){
-  Serial.println(headerCommand+msg);
-}
-void routine();
+// Details for the SMS we'll send with Twilio.  Should be a number you own 
+// (check the console, link above).
+String to_number    = PHONE_TO;
+String message_body    = "Motion detected!!!";
 
+// Optional - a url to an image.  See 'MediaUrl' here: 
+// https://www.twilio.com/docs/api/rest/sending-messages
+String media_url = "";
+
+// The 'authorized number' to text the ESP8266 for our example
+String master_number    = MASTER_PHONE_FROM;
+
+// Global twilio objects
+Twilio *twilio;
+ESP8266WebServer twilio_server(8000);
+
+//  Optional software serial debugging
+#if USE_SOFTWARE_SERIAL == 1
+#include <SoftwareSerial.h>
+// You'll need to set pin numbers to match your setup if you
+// do use Software Serial
+// extern SoftwareSerial swSer(14, 4, false, 256);
+#else
+#define swSer Serial
+#endif
+
+void sendMessage(){
+  // Response will be filled with connection info and Twilio API responses
+  // from this initial SMS send.
+  String response;
+  bool success = twilio->send_message(
+    to_number,
+    from_number,
+    message_body,
+    response,
+    media_url
+  );
+  swSer.println(response);
+}
+
+
+/*
+ * Setup function for ESP8266 Twilio Example.
+ * 
+ * Here we connect to a friendly wireless network, set the time, instantiate 
+ * our twilio object, optionally set up software serial, then send a SMS 
+ * or MMS message.
+ */
 void setup() {
-  Serial.begin(9600);
-  Serial.println("Booting");
-  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.println("Connection Failed! Rebooting...");
-    delay(5000);
-    ESP.restart();
+  twilio = new Twilio(account_sid, auth_token, fingerprint);
+
+  #if USE_SERIAL == 1
+  swSer.begin(9600);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    swSer.print(".");
   }
+  swSer.println("");
+  swSer.println("Connected to WiFi, IP address: ");
+  swSer.println(WiFi.localIP());
+  #else
+  while (WiFi.status() != WL_CONNECTED) delay(1000);
+  #endif
 
-  ArduinoOTA.onStart([]() {
-    Serial.println("Start");
-  });
-  ArduinoOTA.onEnd([]() {
-    Serial.println("\nEnd");
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  });
-  ArduinoOTA.begin();
-  Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  // Send message SMS
+  // sendMessage();
 }
 
+
+/* 
+ *  In our main loop, we listen for connections from Twilio in handleClient().
+ */
 void loop() {
-  // Serial.print("IP address: ");
-  // Serial.println(WiFi.localIP());
-  ArduinoOTA.handle();
-  routine();
-}
-
-//My code
-void routine(){
-  delay(2000);                      // Wait for a second
-  sendData("ON");
-  delay(2000);    
-  sendData("OFF");
+  // Try reading from arduino
+  // if ( Serial.available() ) { 
+  //   swSer.println(Serial.read());
+  //   delay(1000);
+  // }
 }
