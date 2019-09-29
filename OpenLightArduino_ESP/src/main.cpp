@@ -34,13 +34,17 @@ void setup() {
 
 
 void loop() {
-  Serial.println("Current Temp: ");
-  Serial.print(SensorHandler::calcTemp());
-  SensorHandler::calculLight();
+  String body = "-EMAIL-\n";
+  body += "Current Temp: " + String(SensorHandler::calcTemp(),2) + "C*\n";
+  body += "Current Light: " + SensorHandler::calcLight() + "\n";
+  Serial.println(body.c_str());
 
   if(sendMsg){
+    String body = "";
+    body += "Current Temp: " + String(SensorHandler::calcTemp(),2) + "C*\n";
+    body += "Current Light: " + SensorHandler::calcLight();
     // Write message to ESP8266
-    ESP_Serial.write("test");
+    ESP_Serial.write(body.c_str());
     Serial.println("sent");
     sendMsg = false;
   }

@@ -2,6 +2,10 @@
 #include <ArduinoOTA.h>
 #include "../lib/twilio.hpp"
 #include "arduino_secrets.h"
+#include "../lib/Gsender.cpp"
+
+// if false we use email
+#define USE_SMS 0
 
 // USE TEST config?
 #define USE_TEST_CONFIG 1
@@ -22,6 +26,10 @@ String from_number = PHONE_FROM;
 
 const char* ssid = SECRET_SSID;
 const char* password = SECRET_PASS;
+
+#define swSer Serial
+
+#if USE_SMS == 1
 // Details for the SMS we'll send with Twilio.  Should be a number you own 
 // (check the console, link above).
 String to_number    = PHONE_TO;
@@ -37,9 +45,12 @@ String master_number    = MASTER_PHONE_FROM;
 // Global twilio objects
 Twilio *twilio;
 ESP8266WebServer twilio_server(8000);
-#define swSer Serial
+#else
+Gsender *gsender = Gsender::Instance();
+#endif
 
-void sendMessage(){
+void sendMessage(String msg){
+  #if USE_SMS == 1
   // Response will be filled with connection info and Twilio API responses
   // from this initial SMS send.
   String response;
@@ -51,6 +62,15 @@ void sendMessage(){
     media_url
   );
   swSer.println(response);
+  #else
+  String subject = "ESP8266 to EMAIL";
+  if(gsender->Subject(subject)->Send(EMAIL_TO, msg)) {
+      swSer.println("Message send.");
+  } else {
+      swSer.print("Error sending message: ");
+      swSer.println(gsender->getError());
+  }
+  #endif
 }
 
 
@@ -62,7 +82,9 @@ void sendMessage(){
  * or MMS message.
  */
 void setup() {
+  #if USE_SMS == 1
   twilio = new Twilio(account_sid, auth_token, fingerprint);
+  #endif
 
   swSer.begin(9600);
   Serial.println("Booting");
@@ -105,17 +127,23 @@ void setup() {
 /* 
  *  In our main loop, we listen for connections from Twilio in handleClient().
  */
+bool test= true;
 void loop() {
   ArduinoOTA.handle();
 
   //Try reading from arduino
   String payload = Serial.readString();
-  if(payload.length() > 0 && payload.equals("test")){
-    swSer.println("C-ON");
-    delay(5000);
-    swSer.println("C-OFF");
+  payload="-EMAIL- TEST";
+  if(payload.length() > 0 && payload.startsWith("-EMAIL-")){
+    // swSer.println("C-ON");
+    // delay(5000);
+    // swSer.println("C-OFF");
     // Send message SMS
-    // sendMessage();
+    if(test){
+      sendMessage(payload);
+      test = false;
+    }
+    
   }
   // swSer.println("C-OFF");
   delay(1000);

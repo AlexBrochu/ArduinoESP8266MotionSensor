@@ -4,7 +4,7 @@ class SensorHandler
 {
  public:
   static double calcTemp();
-  static void calculLight();
+  static String calcLight();
 
  private:
  
