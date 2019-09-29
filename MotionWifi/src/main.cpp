@@ -1,17 +1,7 @@
-#include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiClientSecure.h>
 #include <ESP8266WebServer.h>
-#include <WiFiUdp.h>
-#include "twilio.hpp"
+#include <ArduinoOTA.h>
+#include "../lib/twilio.hpp"
 #include "arduino_secrets.h"
-
-// Use software serial for debugging?
-#define USE_SOFTWARE_SERIAL 0
-
-// Print debug messages over serial?
-#define USE_SERIAL 1
 
 // USE TEST config?
 #define USE_TEST_CONFIG 1
@@ -47,16 +37,7 @@ String master_number    = MASTER_PHONE_FROM;
 // Global twilio objects
 Twilio *twilio;
 ESP8266WebServer twilio_server(8000);
-
-//  Optional software serial debugging
-#if USE_SOFTWARE_SERIAL == 1
-#include <SoftwareSerial.h>
-// You'll need to set pin numbers to match your setup if you
-// do use Software Serial
-// extern SoftwareSerial swSer(14, 4, false, 256);
-#else
 #define swSer Serial
-#endif
 
 void sendMessage(){
   // Response will be filled with connection info and Twilio API responses
@@ -81,11 +62,36 @@ void sendMessage(){
  * or MMS message.
  */
 void setup() {
-  WiFi.begin(ssid, password);
   twilio = new Twilio(account_sid, auth_token, fingerprint);
 
-  #if USE_SERIAL == 1
   swSer.begin(9600);
+  Serial.println("Booting");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("Connection Failed! Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+
+  ArduinoOTA.onStart([]() {
+    Serial.println("Start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     swSer.print(".");
@@ -93,12 +99,6 @@ void setup() {
   swSer.println("");
   swSer.println("Connected to WiFi, IP address: ");
   swSer.println(WiFi.localIP());
-  #else
-  while (WiFi.status() != WL_CONNECTED) delay(1000);
-  #endif
-
-  // Send message SMS
-  // sendMessage();
 }
 
 
@@ -106,9 +106,14 @@ void setup() {
  *  In our main loop, we listen for connections from Twilio in handleClient().
  */
 void loop() {
-  // Try reading from arduino
-  // if ( Serial.available() ) { 
-  //   swSer.println(Serial.read());
-  //   delay(1000);
-  // }
+  ArduinoOTA.handle();
+
+  //Try reading from arduino
+  String payload = Serial.readString();
+  if(payload.length() > 0 && payload.equals("test")){
+    swSer.println("C-ON");
+    // Send message SMS
+    // sendMessage();
+  }
+  delay(1000);
 }
