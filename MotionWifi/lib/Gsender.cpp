@@ -83,10 +83,12 @@ bool Gsender::Send(const String &to, const String &message)
   Serial.println("EMAILBASE64_LOGIN:");
 #endif
   client.println(EMAILBASE64_LOGIN);
+  Serial.println(EMAILBASE64_LOGIN);
   AwaitSMTPResponse(client);
 
 #if defined(GS_SERIAL_LOG_2)
   Serial.println("EMAILBASE64_PASSWORD:");
+  Serial.println(EMAILBASE64_PASSWORD);
 #endif
   client.println(EMAILBASE64_PASSWORD);
   if (!AwaitSMTPResponse(client, "235")) {
