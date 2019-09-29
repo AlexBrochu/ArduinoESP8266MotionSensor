@@ -1,9 +1,11 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 #include "../lib/command.cpp"
+#include "../lib/SensorHandler.cpp"
 
-SoftwareSerial ESP_Serial(2,3); //Tx,Rx
+SoftwareSerial ESP_Serial(8,9); //Tx,Rx
 String payload;
+bool sendMsg = true;
 
 // LED PIN
 const byte LEDPIN=13;
@@ -30,14 +32,17 @@ void setup() {
   delay(2000);
 }
 
-bool ok = true;
 
 void loop() {
-  if(ok){
+  Serial.println("Current Temp: ");
+  Serial.print(SensorHandler::calcTemp());
+  SensorHandler::calculLight();
+
+  if(sendMsg){
     // Write message to ESP8266
     ESP_Serial.write("test");
     Serial.println("sent");
-    ok = false;
+    sendMsg = false;
   }
 
   if (ESP_Serial.available() > 0){
