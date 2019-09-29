@@ -112,8 +112,11 @@ void loop() {
   String payload = Serial.readString();
   if(payload.length() > 0 && payload.equals("test")){
     swSer.println("C-ON");
+    delay(5000);
+    swSer.println("C-OFF");
     // Send message SMS
     // sendMessage();
   }
+  // swSer.println("C-OFF");
   delay(1000);
 }
