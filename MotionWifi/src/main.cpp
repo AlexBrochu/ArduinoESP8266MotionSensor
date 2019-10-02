@@ -132,7 +132,6 @@ void loop() {
 
   //Try reading from arduino
   String payload = Serial.readString();
-  payload="-MSG- TEST";
   if(payload.length() > 0 && payload.startsWith("-MSG-")){
     // swSer.println("C-ON");
     // delay(5000);

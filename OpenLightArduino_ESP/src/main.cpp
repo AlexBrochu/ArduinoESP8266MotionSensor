@@ -34,7 +34,7 @@ void setup() {
 
 
 void loop() {
-  String body = "-EMAIL-\n";
+  String body = "-MSG-\n";
   body += "Current Temp: " + String(SensorHandler::calcTemp(),2) + "C*\n";
   body += "Current Light: " + SensorHandler::calcLight() + "\n";
   Serial.println(body.c_str());
