@@ -1,14 +1,14 @@
 #include <ESP8266WebServer.h>
 #include <ArduinoOTA.h>
-#include "../lib/twilio.hpp"
+#include "../lib/twilio.cpp"
 #include "arduino_secrets.h"
 #include "../lib/Gsender.cpp"
 
 // if false we use email
-#define USE_SMS 0
+#define USE_SMS 1
 
 // USE TEST config?
-#define USE_TEST_CONFIG 1
+#define USE_TEST_CONFIG 0
 
 // Find the api.twilio.com SHA1 fingerprint, this one was valid as 
 // of August 2019.
@@ -33,7 +33,6 @@ const char* password = SECRET_PASS;
 // Details for the SMS we'll send with Twilio.  Should be a number you own 
 // (check the console, link above).
 String to_number    = PHONE_TO;
-String message_body    = "Motion detected!!!";
 
 // Optional - a url to an image.  See 'MediaUrl' here: 
 // https://www.twilio.com/docs/api/rest/sending-messages
@@ -57,7 +56,7 @@ void sendMessage(String msg){
   bool success = twilio->send_message(
     to_number,
     from_number,
-    message_body,
+    msg,
     response,
     media_url
   );
@@ -133,8 +132,8 @@ void loop() {
 
   //Try reading from arduino
   String payload = Serial.readString();
-  payload="-EMAIL- TEST";
-  if(payload.length() > 0 && payload.startsWith("-EMAIL-")){
+  payload="-MSG- TEST";
+  if(payload.length() > 0 && payload.startsWith("-MSG-")){
     // swSer.println("C-ON");
     // delay(5000);
     // swSer.println("C-OFF");
