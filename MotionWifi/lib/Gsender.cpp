@@ -27,6 +27,7 @@ bool Gsender::AwaitSMTPResponse(WiFiClient &client, const String &resp, uint16_t
   {
     if(millis() > (ts + timeOut)) {
       _error = "SMTP Response TIMEOUT!";
+      Serial.println(_error);
       return false;
     }
   }
@@ -68,23 +69,28 @@ bool Gsender::Send(const String &to, const String &message)
   Serial.println("EHLO friend:");
 #endif
   client.println("EHLO friend");
-  if(!AwaitSMTPResponse(client, "250")){
-    _error = "identification error";
-    return false;
+  for(int i=0; i < 8; i++){
+    AwaitSMTPResponse(client, "250");
   }
 
 #if defined(GS_SERIAL_LOG_2)
   Serial.println("AUTH LOGIN:");
 #endif
   client.println("AUTH LOGIN");
-  AwaitSMTPResponse(client);
+  if (!AwaitSMTPResponse(client, "334")) {
+    _error = "SMTP AUTH error";
+    return false;
+  }
 
 #if defined(GS_SERIAL_LOG_2)
   Serial.println("EMAILBASE64_LOGIN:");
+  Serial.println(EMAILBASE64_LOGIN);
 #endif
   client.println(EMAILBASE64_LOGIN);
-  Serial.println(EMAILBASE64_LOGIN);
-  AwaitSMTPResponse(client);
+  if (!AwaitSMTPResponse(client, "334")) {
+    _error = "SMTP AUTH error";
+    return false;
+  }
 
 #if defined(GS_SERIAL_LOG_2)
   Serial.println("EMAILBASE64_PASSWORD:");

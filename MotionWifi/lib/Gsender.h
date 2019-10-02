@@ -15,8 +15,8 @@ class Gsender
     protected:
         Gsender();
     private:
-        const int SMTP_PORT = 2525;
-        const char* SMTP_SERVER = "mail.smtp2go.com";
+        const int SMTP_PORT = PORT;
+        const char* SMTP_SERVER = SMTP_SERVER_CONFIG;
         const char* EMAILBASE64_LOGIN = EMAIL_BASE64;
         const char* EMAILBASE64_PASSWORD = PASSWORD_BASE64;
         const char* FROM = EMAIL_FROM;
