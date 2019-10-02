@@ -3,6 +3,7 @@
 #include "../lib/twilio.cpp"
 #include "arduino_secrets.h"
 #include "../lib/Gsender.cpp"
+#include <Timer.h>
 
 // if false we use email
 #define USE_SMS 1
@@ -13,6 +14,9 @@
 // Find the api.twilio.com SHA1 fingerprint, this one was valid as 
 // of August 2019.
 const char fingerprint[] = "06 86 86 C0 A0 ED 02 20 7A 55 CC F0 75 BB CF 24 B1 D9 C0 49";
+
+Timer t;
+bool canSendMsg= true;
 
 #if USE_TEST_CONFIG == 1
 const char* account_sid = TEST_ACCOUNT_ID;
@@ -72,6 +76,10 @@ void sendMessage(String msg){
   #endif
 }
 
+void canSend(){
+  canSendMsg = true;
+}
+
 
 /*
  * Setup function for ESP8266 Twilio Example.
@@ -120,26 +128,30 @@ void setup() {
   swSer.println("");
   swSer.println("Connected to WiFi, IP address: ");
   swSer.println(WiFi.localIP());
+
+  // every 10 min can send a message
+  t.every(1000 * 60 * 10, canSend);
 }
 
 
 /* 
  *  In our main loop, we listen for connections from Twilio in handleClient().
  */
-bool test= true;
 void loop() {
   ArduinoOTA.handle();
 
   //Try reading from arduino
   String payload = Serial.readString();
+  payload = "-MSG-";
   if(payload.length() > 0 && payload.startsWith("-MSG-")){
     // swSer.println("C-ON");
     // delay(5000);
     // swSer.println("C-OFF");
     // Send message SMS
-    if(test){
-      sendMessage(payload);
-      test = false;
+    if(canSendMsg){
+      Serial.println("SEND");
+      // sendMessage(payload);
+      canSendMsg = false;
     }
     
   }
