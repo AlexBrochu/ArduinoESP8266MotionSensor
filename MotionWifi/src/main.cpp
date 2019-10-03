@@ -48,8 +48,8 @@ void setup() {
 }
 
 void loop() {
-  // Serial.print("IP address: ");
-  // Serial.println(WiFi.localIP());
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
   ArduinoOTA.handle();
   routine();
 }
@@ -59,5 +59,4 @@ void routine(){
   delay(2000);                      // Wait for a second
   sendData("ON");
   delay(2000);    
-  sendData("OFF");
 }
