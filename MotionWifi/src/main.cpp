@@ -56,8 +56,7 @@ void loop() {
 
 //My code
 void routine(){
-  delay(1000);                      // Wait for a second
+  delay(2000);                      // Wait for a second
   sendData("ON");
-  delay(5000);    
-  sendData("OFF");
+  delay(2000);    
 }
