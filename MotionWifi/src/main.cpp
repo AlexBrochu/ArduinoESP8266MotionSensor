@@ -76,10 +76,11 @@ void sendMessage(String msg){
   #endif
 }
 
+IPAddress ipAddress;
+
 void canSend(){
   canSendMsg = true;
 }
-
 
 /*
  * Setup function for ESP8266 Twilio Example.
@@ -125,12 +126,14 @@ void setup() {
     delay(1000);
     swSer.print(".");
   }
+
+  ipAddress = WiFi.localIP();
   swSer.println("");
   swSer.println("Connected to WiFi, IP address: ");
-  swSer.println(WiFi.localIP());
+  swSer.println(ipAddress);
 
   // every 10 min can send a message
-  t.every(1000 * 60 * 10, canSend);
+  t.every(1000*60*10, canSend);
 }
 
 
@@ -139,22 +142,21 @@ void setup() {
  */
 void loop() {
   ArduinoOTA.handle();
+  t.update();
 
   //Try reading from arduino
   String payload = Serial.readString();
-  payload = "-MSG-";
-  if(payload.length() > 0 && payload.startsWith("-MSG-")){
-    // swSer.println("C-ON");
-    // delay(5000);
-    // swSer.println("C-OFF");
-    // Send message SMS
-    if(canSendMsg){
-      Serial.println("SEND");
-      // sendMessage(payload);
-      canSendMsg = false;
+  if(payload.length() > 0 && canSendMsg){
+    if(payload.startsWith("-ALERT-")){
+      //sendMessage(payload);
     }
-    
+    if(payload.startsWith("-MSG-")){
+      // Send message SMS
+      Serial.print("IP Address: ");
+      Serial.println(ipAddress);
+      sendMessage(payload);
+    }
+    canSendMsg = false;
   }
-  // swSer.println("C-OFF");
   delay(1000);
 }
