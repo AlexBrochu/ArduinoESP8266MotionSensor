@@ -1,28 +1,18 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
+#include "../lib/command.cpp"
+#include "../lib/SensorHandler.cpp"
 
-SoftwareSerial ESP_Serial(2,3); //Tx,Rx
-const String headerCommand = "C-";
+SoftwareSerial ESP_Serial(8,9); //Tx,Rx
 String payload;
+bool sendMsg = true;
 
 // LED PIN
 const byte LEDPIN=13;
 
-bool isCommand(String msg){
-  int found = msg.indexOf(headerCommand);
-  if (found!=-1){
-    return true;
-  }
-  return false;
-}
-
-String extractCommand(String msg){
-  return msg.substring(headerCommand.length(), msg.length());
-}
-
 void executeCommand(String msg){
-  if(isCommand(msg)){
-    String command = extractCommand(msg);
+  if(Command::isCommand(msg)){
+    String command = Command::extractCommand(msg);
     if(command.indexOf("ON") != -1){
       //LED ON
       digitalWrite(LEDPIN, HIGH);  
@@ -42,10 +32,25 @@ void setup() {
   delay(2000);
 }
 
+
 void loop() {
-  while (ESP_Serial.available() > 0){
+  Serial.println("Current Temp: ");
+  Serial.print(SensorHandler::calcTemp());
+  SensorHandler::calculLight();
+
+  if(sendMsg){
+    // Write message to ESP8266
+    ESP_Serial.write("test");
+    Serial.println("sent");
+    sendMsg = false;
+  }
+
+  if (ESP_Serial.available() > 0){
+    // Read message to ESP8266
     payload = ESP_Serial.readString();
     executeCommand(payload);
     delay(1000);
   }
+  Serial.println("done");
+  delay(2000);
 }
