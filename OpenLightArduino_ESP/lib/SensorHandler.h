@@ -3,8 +3,9 @@
 class SensorHandler
 {
  public:
-  static double calcTemp();
-  static void calculLight();
+  static double calcTemp(int tempSensor);
+  static String calcLight(int lightSensor);
+  static String readMotion(int &state, byte pin, byte ledPin);
 
  private:
  
