@@ -1,15 +1,12 @@
 #include <ESP8266WebServer.h>
 #include <ArduinoOTA.h>
-#include "../lib/twilio.cpp"
+#include "../lib/twilio.hpp"
 #include "arduino_secrets.h"
-#include "../lib/Gsender.cpp"
 #include <Timer.h>
-
-// if false we use email
-#define USE_SMS 1
+#include "../lib/Gsender.h"
 
 // USE TEST config?
-#define USE_TEST_CONFIG 0
+#define USE_TEST_CONFIG 1
 
 // Find the api.twilio.com SHA1 fingerprint, this one was valid as 
 // of August 2019.
